@@ -1,25 +1,34 @@
+
 import streamlit as st
 import requests
+
 
 # ---------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------
+
 BACKEND_URL = "http://localhost:7860"
+REQUEST_TIMEOUT = 60  # seconds
 
 # ---------------------------------------------------------
 # Page configuration
 # ---------------------------------------------------------
+
 st.set_page_config(
     page_title="Aurora Stays",
     page_icon="🏨",
     layout="wide"
 )
 
+
 # ---------------------------------------------------------
 # Sidebar  -  Model parameters
 # ---------------------------------------------------------
+
 with st.sidebar:
+
     st.header("⚙️ Parameters")
+
     k = st.slider(
         "k (chunks to retrieve)",
         min_value=1,
@@ -27,6 +36,7 @@ with st.sidebar:
         value=5,
         help="Number of relevant chunks fetched from the vector store."
     )
+
     temperature = st.slider(
         "Temperature",
         min_value=0.0,
@@ -35,6 +45,7 @@ with st.sidebar:
         step=0.1,
         help="Higher values make the output more creative; lower values make it more focused."
     )
+
     max_tokens = st.slider(
         "Max tokens",
         min_value=64,
@@ -44,36 +55,47 @@ with st.sidebar:
         help="Maximum number of tokens in the generated answer."
     )
 
+
 # ---------------------------------------------------------
 # Main area
 # ---------------------------------------------------------
+
 st.title("🏨 Aurora Stays")
 st.write("Ask a question about Aurora Stays policies.")
 
+
 # ---------------------------------------------------------
-# Response type selection
+# Response type selection (two options only)
 # ---------------------------------------------------------
+
 response_type = st.radio(
     "Response mode",
     ["Answer only", "Answer + Relevant Chunks"],
     horizontal=True
 )
 
+
 # ---------------------------------------------------------
 # Query input
 # ---------------------------------------------------------
+
 query = st.text_input(
     "Your question",
-    placeholder="e.g., What is the cancellation policy for flexible bookings at AuroraStay?"
+    placeholder="e.g., What is the waiting period for hospitalization?"
 )
+
 
 # ---------------------------------------------------------
 # Submit
 # ---------------------------------------------------------
+
 if st.button("Submit", type="primary"):
+
     if not query.strip():
         st.warning("Please enter a question.")
+
     else:
+
         # Pick endpoint
         if response_type == "Answer only":
             endpoint = "/v1/answer"
@@ -96,20 +118,32 @@ if st.button("Submit", type="primary"):
                 )
 
             if response.status_code == 200:
-                result = response.json()
-                st.subheader("Answer")
-                st.write(result["answer"])
 
-                if response_type == "Answer + Relevant Chunks":
+                result = response.json()
+
+                # -- Answer only --------------------------------
+                if response_type == "Answer only":
+
+                    st.subheader("Answer")
+                    st.write(result["answer"])
+
+                # -- Answer + Relevant Chunks -------------------
+                else:
+
+                    st.subheader("Answer")
+                    st.write(result["answer"])
+
                     st.subheader("Relevant Chunks")
                     for i, chunk in enumerate(result["relevant_chunks"], start=1):
                         with st.expander(f"Chunk {i}"):
                             st.write(chunk)
+
             else:
                 st.error(
                     f"Unable to get a response from the RAG API. "
                     f"Status code: {response.status_code}"
                 )
+
         except requests.exceptions.RequestException:
             st.error(
                 "Unable to connect to the RAG API. "
